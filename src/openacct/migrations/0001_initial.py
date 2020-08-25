@@ -67,6 +67,16 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='UserProjectEvent',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created', models.DateTimeField(auto_now_add=True)),
+                ('event_type', models.CharField(choices=[('ADDED', 'ADDED'), ('REMOVED', 'REMOVED'], max_length=16)),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='openacct.User')),
+                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='openacct.Project')),
+            ],
+        ),
+        migrations.CreateModel(
             name='Transaction',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -100,6 +110,11 @@ class Migration(migrations.Migration):
                 ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='openacct.Project')),
                 ('transactions', models.ManyToManyField(blank=True, to='openacct.Transaction')),
             ],
+        ),        
+        migrations.AddField(
+            model_name='account',
+            name='services',
+            field=models.ManyToManyField(blank=True, to='openacct.Service'),
         ),
         migrations.AddField(
             model_name='service',

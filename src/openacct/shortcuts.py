@@ -18,13 +18,13 @@ def create_project(name, pi, description="", ldap_group="", create_account=True,
     """
     pi = pi if isinstance(pi, User) else User.objects.get(name=pi)
     project = Project.objects.create(name=name, pi=pi, description=description, ldap_group="")
-    pi.projects.add(project)
+    add_user_to_project(pi, project)
     if create_account:
         create_account(project, name=account_name, duration=account_duration)
     return project
 
 
-def create_account(project, name=None duration=datetime.timedelta(days=365):
+def create_account(project, name=None, duration=datetime.timedelta(days=365)):
     """Create and return an Account for the given Project. ``project`` must either 
     be an instance of Project, or the string name of a Project in the database. 
 
@@ -45,7 +45,18 @@ def add_user_to_project(user, project):
     """
     user = user if isinstance(user, User) else User.objects.get(name=user)
     project = project if isinstance(project, Project) else Project.objects.get(name=project)
+    UserProjectEvent.objects.create(user=user, project=project, event_type='ADDED')
     user.projects.add(project)
+
+
+def remove_user_from_project(user, project):
+    """Remove the given User from the given Project. Each argument can either be an instance of 
+    their respective objects, or the string name of a database object of their respective types.
+    """
+    user = user if isinstance(user, User) else User.objects.get(name=user)
+    project = project if isinstance(project, Project) else Project.objects.get(name=project)
+    UserProjectEvent.objects.create(user=user, project=project, event_type='REMOVED')
+    user.projects.remove(project)
 
 
 def grant_service_access(service, account=None, project=None):
@@ -58,6 +69,7 @@ def grant_service_access(service, account=None, project=None):
     service = service if isinstance(service, Service) else Service.objects.get(name=service)
     if account:
         account = account if isinstance(account, Account) else Account.objects.get(name=account)
+        account.services.add(service)
         Transaction.objects.create(
             service=service, account=account, tx_type='GRANT', 
             creator=account.project.pi, amt_used=0.0
@@ -65,6 +77,7 @@ def grant_service_access(service, account=None, project=None):
     elif project:
         project = project if isinstance(project, Project) else Project.objects.get(name=project)
         for acct in Account.objects.filter(project=project, active=True):
+            acct.services.add(service)
             Transaction.objects.create(
                 service=service, account=acct, tx_type='GRANT', 
                 creator=project.pi, amt_used=0.0
@@ -73,4 +86,29 @@ def grant_service_access(service, account=None, project=None):
         raise TypeError('Must provide either project or account')
 
 
+def revoke_service_access(service, account=None, project=None):
+    """Revoke access to a given Service from a single Account, or all active accounts on a Project.
+
+    Must provide either the ``account`` or ``project`` argument. Each argument can either be an 
+    instance of their respective objects, or the string name of a database object of their 
+    respective types.
+    """
+    service = service if isinstance(service, Service) else Service.objects.get(name=service)
+    if account:
+        account = account if isinstance(account, Account) else Account.objects.get(name=account)
+        account.services.remove(service)
+        Transaction.objects.create(
+            service=service, account=account, tx_type='REVOKE', 
+            creator=account.project.pi, amt_used=0.0
+        )
+    elif project:
+        project = project if isinstance(project, Project) else Project.objects.get(name=project)
+        for acct in Account.objects.filter(project=project, active=True):
+            acct.services.remove(service)
+            Transaction.objects.create(
+                service=service, account=acct, tx_type='REVOKE', 
+                creator=project.pi, amt_used=0.0
+            )
+    else:
+        raise TypeError('Must provide either project or account')
 

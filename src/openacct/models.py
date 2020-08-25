@@ -36,12 +36,24 @@ class Project(models.Model):
         ])
 
 
+class UserProjectEvent(models.Model):
+    EVENT_TYPES = (
+        ('ADDED', 'ADDED'),
+        ('REMOVED', 'REMOVED'),
+    )
+    created     = models.DateTimeField(auto_now_add=True)
+    user        = models.ForeignKey(User, on_delete=models.CASCADE)
+    project     = models.ForeignKey(Project, on_delete=models.CASCADE)
+    event_type  = models.CharField(max_length=16, choices=EVENT_TYPES)
+
+
 class Account(models.Model):
     created     = models.DateTimeField(auto_now_add=True)
     name        = models.CharField(max_length=32)
     active      = models.BooleanField(blank=True, default=True)
     expires     = models.DateTimeField(blank=True)
     project     = models.ForeignKey(Project, on_delete=models.CASCADE)
+    services    = models.ManyToManyField('Service', blank=True)
 
     def __str__(self):
         return '<Account: {}>'.format(self.name)
