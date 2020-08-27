@@ -25,9 +25,8 @@ history of account activity.
  Quick Start
 -------------
 
-The following shows a small setup script being piped into the Django shell interpreter:
+The following shows a small setup script being piped into the Django shell interpreter::
 
-::
     ?> cat openacct_example.py
 
     from openacct.models    import *
