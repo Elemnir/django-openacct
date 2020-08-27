@@ -32,8 +32,8 @@ class Project(models.Model):
     @classmethod
     def next_index(cls, prefix):
         return 1 + max([
-            p.get_index_value() for p in cls.objects.get(name__icontains=prefix)
-        ])
+            p.get_index_value() for p in cls.objects.filter(name__icontains=prefix)
+        ] + [0])
 
 
 class UserProjectEvent(models.Model):
@@ -65,8 +65,8 @@ class Account(models.Model):
     @classmethod
     def next_index(cls, prefix):
         return 1 + max([
-            a.get_index_value() for a in cls.objects.get(name__icontains=prefix)
-        ])
+            a.get_index_value() for a in cls.objects.filter(name__icontains=prefix)
+        ] + [0])
 
 
 class System(models.Model):

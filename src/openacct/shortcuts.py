@@ -1,10 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from .models import User, Project, Account, System, Service, Transaction, Job, StorageCommitment
+from .models import (User, Project, UserProjectEvent, Account, System, Service, 
+                    Transaction, Job, StorageCommitment)
 
 
-def create_project(name, pi, description="", ldap_group="", create_account=True,
-        account_name=None, account_duration=datetime.timedelta(days=365)):
+def create_project(name, pi, description="", ldap_group="", do_create_account=True,
+        account_name=None, account_duration=timedelta(days=365)):
     """Create and return a Project with the given traits. ``name`` should be the name 
     of project to create, and ``pi`` must either be an instance of User, or the string 
     name of a User in the database. 
@@ -12,19 +13,19 @@ def create_project(name, pi, description="", ldap_group="", create_account=True,
     Optional ``description`` and ``ldap_group`` parameters set those respective 
     attributes on the created project.
 
-    If ``create_account`` is True, an Account will be 
+    If ``do_create_account`` is True, an Account will be 
     created by calling ``create_account`` with ``account_name`` and ``account_duration`` 
     as its parameters, otherwise those parameters are ignored.
     """
     pi = pi if isinstance(pi, User) else User.objects.get(name=pi)
     project = Project.objects.create(name=name, pi=pi, description=description, ldap_group="")
     add_user_to_project(pi, project)
-    if create_account:
+    if do_create_account:
         create_account(project, name=account_name, duration=account_duration)
     return project
 
 
-def create_account(project, name=None, duration=datetime.timedelta(days=365)):
+def create_account(project, name=None, duration=timedelta(days=365)):
     """Create and return an Account for the given Project. ``project`` must either 
     be an instance of Project, or the string name of a Project in the database. 
 
@@ -35,7 +36,7 @@ def create_account(project, name=None, duration=datetime.timedelta(days=365)):
     project = project if isinstance(project, Project) else Project.objects.get(name=project)
     name = name if name else '{0}-{1}'.format(project.name, Account.next_index(project.name+'-'))
     return Account.objects.create(
-        name=name, project=project, expires=datetime.now()+account_duration
+        name=name, project=project, expires=datetime.now() + duration
     )
 
 
