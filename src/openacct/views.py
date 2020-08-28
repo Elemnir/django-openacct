@@ -18,7 +18,7 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
         return self.request.user.is_staff
 
-    def get(self):
+    def get(self, request):
         filters = {'active': True} if 'active' in self.request.GET else {}
         for field in ['name__icontains', 'realname__icontains']:
             if field in self.request and self.request.GET.get(field,''):
@@ -37,7 +37,7 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, View):
 
 class UserView(LoginRequiredMixin, View):
     """Returns a specific user"""
-    def get(self, byid=None, byname=None):
+    def get(self, request, byid=None, byname=None):
         if (byid == None and byname == None) or (byid != None and byname != None):
             return HttpResponseBadRequest()
         
@@ -56,7 +56,7 @@ class UserView(LoginRequiredMixin, View):
                 'id': p.pk, 'name': p.name, 
                 'ldap_group': p.ldap_group, 
                 'description': p.description
-            } for p in user.projects if p.active ]
+            } for p in user.projects.all() if p.active ]
         }})
 
 
@@ -65,7 +65,7 @@ class ProjectListView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
         return self.request.user.is_staff
 
-    def get(self):
+    def get(self, request):
         filters = {'active': True} if 'active' in self.request.GET else {}
         for field in ['name__icontains', 'description__icontains']:
             if field in self.request and self.request.GET.get(field,''):
@@ -86,7 +86,7 @@ class ProjectListView(LoginRequiredMixin, UserPassesTestMixin, View):
 
 class ProjectView(LoginRequiredMixin, View):
     """Returns a specific project"""
-    def get(self, byid=None, byname=None):
+    def get(self, request, byid=None, byname=None):
         if (byid == None and byname == None) or (byid != None and byname != None):
             return HttpResponseBadRequest()
         
@@ -108,7 +108,7 @@ class ProjectView(LoginRequiredMixin, View):
                 'id': u.pk, 'name': u.name,
                 'realname': u.realname,
                 'created': u.created
-            } for u in project.user_set if u.active ],
+            } for u in project.user_set.all() if u.active ],
             'accounts': [ {
                 'id': a.pk, 'name': a.name, 
                 'created': a.created,
@@ -119,7 +119,7 @@ class ProjectView(LoginRequiredMixin, View):
 
 class SystemView(LoginRequiredMixin, View):
     """Returns a specific system and services"""
-    def get(self, byid=None, byname=None):
+    def get(self, request, byid=None, byname=None):
         if (byid == None and byname == None) or (byid != None and byname != None):
             return HttpResponseBadRequest()
         
