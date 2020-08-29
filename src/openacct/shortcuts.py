@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
-from .models import (User, Project, UserProjectEvent, Account, System, Service, 
-                    Transaction, Job, StorageCommitment)
+from .models    import (User, Project, UserProjectEvent, Account, System, Service, 
+                        Transaction, Job, StorageCommitment)
 
 
 def create_project(name, pi, description="", ldap_group="", do_create_account=True,
