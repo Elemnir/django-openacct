@@ -159,7 +159,7 @@ class ServiceView(LoginRequiredMixin, UserPassesTestMixin, View):
             'description': service.description,
             'system': service.system.name,
             'units': service.units,
-            'charge_rate': service.charge_rate
+            'charge_rate': service.charge_rate,
             'created': service.created,
             'accounts': [ {
                 'id': a.pk, 'name': a.name,
