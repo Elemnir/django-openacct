@@ -1,7 +1,7 @@
 from django.urls    import path
 
-from .views import (UserListView, UserView, ProjectListView, ProjectView, SystemView,
-                    ServiceView, JobListView, JobView)
+from .views import (UserListView, UserView, ProjectListView, ProjectView, 
+                    SystemListView, SystemView, ServiceView, JobListView, JobView)
 
 app_name = "openacct"
 
@@ -12,6 +12,7 @@ urlpatterns = [
     path('project_list/', ProjectListView.as_view(), name='project_list'),
     path('project/<int:byid>/', ProjectView.as_view(), name='project_byid'),
     path('project/<byname>/', ProjectView.as_view(), name='project_byname'),
+    path('system_list/', SystemListView.as_view(), name='system_list'),
     path('system/<int:byid>/', SystemView.as_view(), name='system_byid'),
     path('system/<byname>/', SystemView.as_view(), name='system_byname'),
     path('service/<int:byid>/', ServiceView.as_view(), name='service_byid'),

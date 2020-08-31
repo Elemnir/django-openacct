@@ -119,6 +119,28 @@ class ProjectView(LoginRequiredMixin, View):
         }})
         
 
+class SystemListView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Returns a list of systems. Supports GET parameter filters"""
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get(self, request):
+        filters = {'active': True} if 'active' in self.request.GET else {}
+        for field in ['name', 'description']:
+            if self.request.GET.get(field, False):
+                filters[field + '__icontains'] = self.request.GET[field]
+        
+        payload = {'systems': []}
+        for system in System.objects.filter(**filters).order_by('name'):
+            payload['systems'].append({
+                'id': system.pk,
+                'name': system.name,
+                'description': system.description,
+                'created': system.created,
+            })
+        return JsonResponse(payload)
+
+
 class SystemView(LoginRequiredMixin, View):
     """Returns a specific system and services"""
     def get(self, request, byid=None, byname=None):

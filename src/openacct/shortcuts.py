@@ -1,3 +1,10 @@
+"""
+    openacct.shortcuts
+    ~~~~~~~~~~~~~~~~~~
+
+    This module provides a number of helper functions for performing 
+    common operations on OpenAcct objects.
+"""
 from datetime import datetime, timedelta
 
 from .models    import (User, Project, UserProjectEvent, Account, System, Service, 
