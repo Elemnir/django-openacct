@@ -120,3 +120,46 @@ def revoke_service_access(service, account=None, project=None):
     else:
         raise TypeError('Must provide either project or account')
 
+
+def record_transaction(amt_used, service, user, account=None, project=None, 
+        active=True, tx_type='DEBIT', amt_charged=0.0):
+    """Create and return a transaction with the given parameters.
+
+    Must provide either the ``account`` or ``project`` argument. ``service``, 
+    ``user``, ``account`` and ``project`` can either be an instance of their 
+    respective objects, or the string name of a database object of their 
+    respective types.
+    """
+    service = service if isinstance(service, Service) else Service.objects.get(name=service)
+    user = user if isinstance(user, User) else User.objects.get(name=user)
+    if account:
+        account = account if isinstance(account, Account) else Account.objects.get(name=account)
+    elif project:
+        account = Account.objects.filter(project=project, active=True).order_by('-created').first()
+    else:
+        raise TypeError('Must provide either project or account')
+    
+    return Transaction.objects.create(
+        amt_used=amt_used, service=service, creator=user, account=account, active=active,
+        tx_type=tx_type, amt_charged=amt_charged
+    )
+
+
+def record_job(jobid, queued, wall_requested, name='', submit_host='', host_list='', 
+        qos='', job_script='', started=None, completed=None, wall_duration=None, 
+        transactions=[]):
+    """Create and return a job with the given parameters."""
+    kwargs = {
+        'jobid': jobid, 'queued': queued, 'wall_requested': wall_requested, 
+        'name': name, 'submit_host': submit_host, 'host_list': host_list, 
+        'qos': qos, 'job_script': job_script
+    }
+    if started: kwargs['started'] = started
+    if completed: kwargs['completed'] = completed
+    if wall_duration: kwargs['wall_duration'] = wall_duration
+
+    job = Job.objects.create(**kwargs)
+    if transactions:
+        job.transactions.add(transactions)
+    return job
+

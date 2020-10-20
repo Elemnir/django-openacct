@@ -2,11 +2,17 @@
  Changelog
 ===========
 
+Version 0.0.4
+-------------
+
+- Adding shortcut functions for recording jobs and transactions
+- Adding specifiers to several fields on the Job model.
+
 Version 0.0.3
 -------------
 
 - Adding Jobs to to the web API
-- Setting up the basic Django Admin for the 
+- Setting up the basic Django Admin for the models
 
 Version 0.0.2
 -------------

@@ -23,7 +23,7 @@ class Project(models.Model):
     description = models.CharField(max_length=1024, blank=True, default="")
         
     def __str__(self):
-        return '<Project: {}>'.format(self.name)
+        return '{} - {}'.format(self.name, self.description)
 
     def get_index_value(self):
         m = re.search('\d+$', self.name)
@@ -112,9 +112,9 @@ class Transaction(models.Model):
 
 class Job(models.Model):
     queued      = models.DateTimeField()
-    started     = models.DateTimeField(blank=True)
-    completed   = models.DateTimeField(blank=True)
-    jobid       = models.CharField(max_length=32)
+    started     = models.DateTimeField(blank=True, null=True)
+    completed   = models.DateTimeField(blank=True, null=True)
+    jobid       = models.CharField(max_length=32, unique=True)
     name        = models.CharField(max_length=64, blank=True, default='')
     submit_host = models.CharField(max_length=64, blank=True, default='')
     host_list   = models.CharField(max_length=1024, blank=True, default='')

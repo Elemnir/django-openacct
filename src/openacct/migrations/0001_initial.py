@@ -131,9 +131,9 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('queued', models.DateTimeField()),
-                ('started', models.DateTimeField(blank=True)),
-                ('completed', models.DateTimeField(blank=True)),
-                ('jobid', models.CharField(max_length=32)),
+                ('started', models.DateTimeField(blank=True, null=True)),
+                ('completed', models.DateTimeField(blank=True, null=True)),
+                ('jobid', models.CharField(max_length=32, unique=True)),
                 ('name', models.CharField(blank=True, default='', max_length=64)),
                 ('submit_host', models.CharField(blank=True, default='', max_length=64)),
                 ('host_list', models.CharField(blank=True, default='', max_length=1024)),

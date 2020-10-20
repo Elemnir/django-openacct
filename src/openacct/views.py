@@ -261,7 +261,7 @@ class JobView(LoginRequiredMixin, View):
                 not in [t.creator.name for t in job.transactions]):
             return HttpResponseForbidden()
 
-        return JsonRespons({'job' : {
+        return JsonResponse({'job' : {
             'id': job.pk, 'jobid': job.jobid, 'name': job.name, 'qos': job.qos,
             'submit_host': job.submit_host, 'host_list': job.host_list,
             'queued': job.queued, 'started': job.started, 'completed': job.completed, 
@@ -275,9 +275,17 @@ class JobView(LoginRequiredMixin, View):
                 'creator': t.creator.name,
             } for t in job.transactions.filter(active=True).order_by('-created')]
         }})
+        
 
 #######################################################################
 #
-#   
+#   Create/Modify Views
 #
 #######################################################################
+
+class JobChangeView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def put(self, request):
+        pass
