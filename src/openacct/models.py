@@ -9,6 +9,9 @@ class User(models.Model):
     realname    = models.CharField(max_length=128, blank=True)
     active      = models.BooleanField(blank=True, default=True)
     projects    = models.ManyToManyField('Project', blank=True)
+    default_project = models.ForeignKey('Project', on_delete=models.CASCADE, 
+        blank=True, null=True, related_name='+'
+    )
 
     def __str__(self):
         return '<User: {}>'.format(self.name)
