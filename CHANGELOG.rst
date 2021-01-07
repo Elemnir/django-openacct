@@ -2,6 +2,12 @@
  Changelog
 ===========
 
+Version 0.0.5
+-------------
+
+- Bug fixes
+- Adding the ``ProjectForm`` and adding some extra logic when creating a project in the admin
+
 Version 0.0.4
 -------------
 
