@@ -5,7 +5,9 @@
     This module provides a number of helper functions for performing 
     common operations on OpenAcct objects.
 """
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from django.utils.timezone  import now
 
 from .models    import (User, Project, UserProjectEvent, Account, System, Service, 
                         Transaction, Job, StorageCommitment)
@@ -25,7 +27,7 @@ def create_project(name, pi, description="", ldap_group="", do_create_account=Tr
     as its parameters, otherwise those parameters are ignored.
     """
     pi = pi if isinstance(pi, User) else User.objects.get(name=pi)
-    project = Project.objects.create(name=name, pi=pi, description=description, ldap_group="")
+    project = Project.objects.create(name=name, pi=pi, description=description, ldap_group=ldap_group)
     add_user_to_project(pi, project)
     if do_create_account:
         create_account(project, name=account_name, duration=account_duration)
@@ -43,7 +45,7 @@ def create_account(project, name=None, duration=timedelta(days=365)):
     project = project if isinstance(project, Project) else Project.objects.get(name=project)
     name = name if name else '{0}-{1}'.format(project.name, Account.next_index(project.name+'-'))
     return Account.objects.create(
-        name=name, project=project, expires=datetime.now() + duration
+        name=name, project=project, expires=now() + duration
     )
 
 
