@@ -1,11 +1,15 @@
 from datetime   import datetime
 
-from django.core                import serializers
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.http                import HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
-from django.shortcuts           import render, get_object_or_404
-from django.views.generic       import View 
+from django.core                    import serializers
+from django.contrib.auth.mixins     import LoginRequiredMixin, UserPassesTestMixin
+from django.http                    import (HttpResponseBadRequest, HttpResponseForbidden, 
+                                            JsonResponse)
+from django.shortcuts               import render, get_object_or_404
+from django.utils.decorators        import method_decorator
+from django.views.generic           import View 
+from django.views.decorators.csrf   import csrf_exempt
 
+from .forms     import JobQueuedForm, JobStartedForm, JobCompletedForm
 from .models    import User, Project, Account, System, Service, Transaction, Job
 
 
@@ -255,7 +259,7 @@ class JobView(LoginRequiredMixin, View):
             return HttpResponseBadRequest()
         
         job = (get_object_or_404(Job, pk=byid) if byid 
-            else get_object_or_404(Job, name=byname))
+            else get_object_or_404(Job, jobid=byname))
         
         if (not self.request.user.is_staff and self.request.user.username 
                 not in [t.creator.name for t in job.transactions]):
@@ -283,9 +287,27 @@ class JobView(LoginRequiredMixin, View):
 #
 #######################################################################
 
-class JobChangeView(LoginRequiredMixin, UserPassesTestMixin, View):
+
+@method_decorator(csrf_exempt, name='dispatch')
+class JobEditView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
         return self.request.user.is_staff
 
+    def post(self, request):
+        form = JobQueuedForm(request.POST)
+        if not form.is_valid():
+            resp = JsonResponse(form.errors.as_json())
+            resp.status = 400
+            return resp
+        form.save()
+        return JsonResponse()
+
     def put(self, request):
-        pass
+        form = JobCompletedForm(request.POST)
+        if not form.is_valid():
+            resp = JsonResponse(form.errors.as_json())
+            resp.status = 400
+            return resp
+        form.save()
+        return JsonResponse()
+
