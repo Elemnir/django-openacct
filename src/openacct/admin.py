@@ -23,8 +23,17 @@ class ToggleActiveAdminMixin(object):
     set_inactive.short_description = 'Mark selected items as inactive'
 
 
+class ProjectMembershipInline(admin.TabularInline):
+    model = User.projects.through
+    extra = 0
+    verbose_name = "Project Membership"
+    verbose_name_plural = "Project Memberships"
+
+
 class UserAdmin(ToggleActiveAdminMixin, admin.ModelAdmin):
     list_display = ('name', 'realname', 'active', 'created')
+    inlines = [ProjectMembershipInline]
+    exclude = ('projects',)
 admin.site.register(User, UserAdmin)
 
 
@@ -36,9 +45,10 @@ class ProjectAdmin(ToggleActiveAdminMixin, admin.ModelAdmin):
             create_account(obj)
     
     class AccountInline(admin.TabularInline):
+        extra = 0
         model = Account
     
-    inlines = [AccountInline]
+    inlines = [AccountInline, ProjectMembershipInline]
     list_display = ('name', 'description', 'ldap_group', 'active', 'created')
 
 admin.site.register(Project, ProjectAdmin)

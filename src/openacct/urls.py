@@ -1,7 +1,8 @@
 from django.urls    import path
 
 from .views import (UserListView, UserView, ProjectListView, ProjectView, 
-                    SystemListView, SystemView, ServiceView, JobListView, JobView)
+                    SystemListView, SystemView, ServiceView, JobEditView, 
+                    JobListView, JobView)
 
 app_name = "openacct"
 

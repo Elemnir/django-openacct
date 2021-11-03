@@ -2,6 +2,12 @@
  Changelog
 ===========
 
+Version 0.0.6
+-------------
+
+- Adding a ``JobEditView`` endpoint so job info can be uploaded by automated systems
+- Tweaks to how project memberships are displayed on the admin site
+
 Version 0.0.5
 -------------
 
