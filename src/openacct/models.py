@@ -33,7 +33,8 @@ class Project(models.Model):
     name = models.CharField(max_length=32, unique=True)
     ldap_group = models.CharField(max_length=32, blank=True)
     active = models.BooleanField(blank=True, default=True)
-    pi = models.ForeignKey(User, on_delete=models.CASCADE)
+    pi = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owned_projects")
+    managers = models.ManyToManyField(User, blank=True, related_name="managed_projects")
     description = models.CharField(max_length=1024, blank=True, default="")
 
     def __str__(self):
