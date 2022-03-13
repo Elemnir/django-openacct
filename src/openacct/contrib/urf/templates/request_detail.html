@@ -1,0 +1,76 @@
+{% extends "admin/change_form.html" %}
+
+{% block content %}
+
+<form method="post" id="request_details_form" novalidate>
+  {% csrf_token %}
+  <fieldset class="module aligned">
+    <h2>Request Details</h2>
+    <div class="form-row">
+      <div>
+        <label class="required" for="id_requ">Requester</label>
+        <input type="text" class="vTextField" id="id_requ" name="requester" required value="{{ req.requester }}">
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="required" for="id_desc">Description</label>
+        <input type="text" class="vTextField" id="id_desc" name="description" required value="{{ req.description }}">
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label for="id_email_opts">Email Template</label>
+        <select id="id_email_opts" name="notification">
+          {% for opt in email_options %}
+            <option value={{ opt.pk }} {% if opt == req.notification %}selected{% endif %}>{{ opt.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <input type="submit" name="action_UPDATE" value="Update Details">
+  </fieldset>
+</form>
+
+{% for element in widgets %}
+  <form action="{% url element.update_view_name element.pk %}" method=post>
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      {% include element.widget_template_path with item=element is_admin=is_admin widgets=widgets only %}  
+      <input class="default" type=submit>Commit Changes</button>
+    </fieldset>
+  </form>
+{% endfor %}
+
+<div class="submit-row">
+  <form method="post" id="action_form">
+    {% csrf_token %}
+    {% if req.status == "NEW" or req.status == "PENDING" %}
+      <input type="submit" value="Approve" name="action_APPROVED">
+      {% if req.status != "PENDING" %}
+        <input type="submit" value="Approval Wait" name="action_PENDING">
+      {% endif %}
+      <input type="submit" value="Decline" name="action_DECLINED">
+    {% elif req.status == "APPROVED" %}
+      <input type="submit" value="Mark as Manually Processed" name="action_PROCESSED">
+    {% elif req.status == "FAILED" %}
+      <input type="submit" value="Reattempt Failed" name="action_APPROVED">
+    {% endif %}
+    {#<a class="btn btn-outline-primary" href="{% url 'urf:list' %}">Back to Request List</a>#}
+  </form>
+</div>
+
+<div class="module aligned">
+  <table>
+    <caption>Request History</caption>
+    <tbody>
+    {% for entry in history %}
+      <tr>
+        <td>{{ entry }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

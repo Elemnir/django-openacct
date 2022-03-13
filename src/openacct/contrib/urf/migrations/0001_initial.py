@@ -4,7 +4,7 @@ import django.db.models.deletion
 
 
 def load_default_email_template(apps, schema_editor):
-    EmailTemplate = apps.get_model('user_requests', 'EmailTemplate')
+    EmailTemplate = apps.get_model('urf', 'EmailTemplate')
     EmailTemplate.objects.create(pk=1, name='Default', default_from=settings.EMAIL_HOST_USER, 
         subject='Your Request has been Processed',
         body='Your request:\n\n\t{{ request.id }}: {{ request.description }}\n\nhas been approved and processed.'

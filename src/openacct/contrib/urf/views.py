@@ -1,10 +1,13 @@
+from django.apps import apps
 from django.conf import settings
+from django.contrib import admin
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.module_loading import import_string
 from django.views.generic import View
 
+from .apps import UrfConfig
 from .models import (
     EmailTemplate, 
     Request, 
@@ -45,21 +48,29 @@ class RequestDetailView(LoginRequiredMixin, View):
         widgets = []
         for model in plugin_loader.request_types:
             widgets.extend(model.objects.filter(request=req))
-
+        
+        request.current_app = 'urf'
         return render(request, 'request_detail.html', {
+            **admin.site.each_context(request),
             'req'           : req,
             'widgets'       : widgets,
+            'title'         : "Request {}".format(req.pk),
             'history'       : RequestLogEntry.objects.filter(request=req),
             'email_options' : EmailTemplate.objects.all(),
             'is_admin'      : is_admin,
             'is_requester'  : req.requester == request.user.username,
+            'opts'          : req._meta,
+            'original'      : req,
+            'has_view_permission': True,
         })
 
     def post(self, request, pk):
         req = get_object_or_404(Request, pk=pk)
         is_admin = check_admin(request.user)
-        action = request.POST.get('action', '')
         next = request.POST.get('next', req.review_url())
+        
+        actions = [ key.split("_")[1] for key in request.POST.keys() if "action_" in key ]
+        action = actions[0] if actions else ''
         request_log(req, '{0} - {1}'.format(action, request.user))
         
         if req.requester != request.user.username and not is_admin:

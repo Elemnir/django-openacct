@@ -10,15 +10,17 @@ class EmailTemplateAdmin(admin.ModelAdmin):
 @admin.register(Request)
 class RequestAdmin(admin.ModelAdmin):
     list_display = (
-        "description", 
         "submitted", 
+        "description", 
         "requester", 
         "status", 
         "review_link"
     )
     list_filter = (
         "status",
-        "description",
-        "requester",
         "submitted",
+    )
+    search_fields = (
+        "requester",
+        "description",
     )

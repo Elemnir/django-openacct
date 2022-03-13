@@ -69,7 +69,7 @@ class Request(models.Model):
 
     def review_url(self):
         """Returns the request's review page URL"""
-        return reverse('user_requests:review', kwargs={'pk': self.pk})
+        return reverse('urf:review', kwargs={'pk': self.pk})
 
     def review_link(self):
         """Returns the request's review page as a link"""
