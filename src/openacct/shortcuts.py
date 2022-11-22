@@ -12,7 +12,6 @@ from django.utils.timezone import now
 from .models import (
     User,
     Project,
-    UserProjectEvent,
     Account,
     System,
     Service,
@@ -79,7 +78,6 @@ def add_user_to_project(user, project):
     project = (
         project if isinstance(project, Project) else Project.objects.get(name=project)
     )
-    UserProjectEvent.objects.create(user=user, project=project, event_type="ADDED")
     user.projects.add(project)
 
 
@@ -91,7 +89,6 @@ def remove_user_from_project(user, project):
     project = (
         project if isinstance(project, Project) else Project.objects.get(name=project)
     )
-    UserProjectEvent.objects.create(user=user, project=project, event_type="REMOVED")
     user.projects.remove(project)
 
 

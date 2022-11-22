@@ -1,6 +1,9 @@
 import re
 
+from typing import Union
+
 from django.db import models
+from django.db.models.signals import m2m_changed
 
 
 class User(models.Model):
@@ -45,7 +48,7 @@ class Project(models.Model):
         return int(m.group(0), 10) if m else 0
 
     @classmethod
-    def next_index(cls, prefix):
+    def next_index(cls, prefix: str):
         """Given a prefix string, find all projects matching the given
         prefix and then return the next unused integer index for that
         prefix. Returns 1 if the prefix isn't found.
@@ -55,14 +58,26 @@ class Project(models.Model):
             + [0]
         )
 
+    def can_edit(self, user: Union[User, str]):
+        """Return whether or not the given User is allowed to edit the
+        project. User can be either a User object or the name of a User
+        which will first be looked up.
+        """
+        user = user if isinstance(user, User) else User.objects.get(name=user)
+        if user == self.pi:
+            return True
+        return self.managers.filter(name=user.name).exists()
+
 
 class UserProjectEvent(models.Model):
     """Records of changes to a project's membership or ownership."""
 
     EVENT_TYPES = (
-        ("NEWPI", "NEWPI"),
-        ("ADDED", "ADDED"),
-        ("REMOVED", "REMOVED"),
+        ("NEWPI", "New PI"),
+        ("ADDMGR", "Add Manager"),
+        ("REMOVEMGR", "Remove Manager"),
+        ("ADDMEM", "Add Member"),
+        ("REMOVEMEM", "Remove Member"),
     )
     created = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -73,6 +88,38 @@ class UserProjectEvent(models.Model):
         return "UPEvent: {} - {} - {}".format(
             self.event_type, self.project.name, self.user.name
         )
+
+
+def project_members_changed(sender, **kwargs):
+    """This signal handler will automatically record changes to a
+    project's list of members and managers. Will not detect if the m2m
+    relations are cleared.
+    """
+    if kwargs["action"] == "post_add":
+        etype = "ADD"
+    elif kwargs["action"] == "post_remove":
+        etype = "REMOVE"
+    else:
+        return
+
+    if sender == Project.managers.through:
+        etype += "MGR"
+    elif sender == User.projects.through:
+        etype += "MEM"
+
+    for pk in kwargs["pk_set"]:
+        if kwargs["model"] == Project:
+            UserProjectEvent.objects.create(
+                project=pk, user=kwargs["instance"], event_type=etype
+            )
+        elif kwargs["model"] == User:
+            UserProjectEvent.objects.create(
+                project=kwargs["instance"], user=pk, event_type=etype
+            )
+
+
+m2m_changed.connect(project_members_changed, sender=Project.managers.through)
+m2m_changed.connect(project_members_changed, sender=User.projects.through)
 
 
 class Account(models.Model):
