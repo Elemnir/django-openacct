@@ -2,12 +2,29 @@
 import datetime
 import logging
 
+from typing import Literal
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import F, Q
 
 from openacct.models import Account, Service, Transaction
 
 logger = logging.getLogger(__name__)
+
+
+def translate_names_to_filters(
+    names: list[str],
+    prefix: str,
+    scheme: Literal["exact", "startswith", "contains"]
+) -> Q:
+    """Given a list of names, translate them into a Q representing that set"""
+    key = prefix + {
+        "exact": "", "startswith": "__startswith", "contains": "__icontains"
+    }[scheme]
+    q = Q()
+    for name in names:
+        q |= Q(**{key: name})
+    return q
 
 
 class Command(BaseCommand):
@@ -34,8 +51,9 @@ class Command(BaseCommand):
         parser.add_argument("--accounts", required=False, default=None,
             help="Comma separated list of account names for selecting transactions. Cannot use with --projects"
         )
-        parser.add_argument("--names-contain", action="store_true",
-            help="If set, names passed to --services, --projects, and --accounts will be treated as substrings instead of exact matches"
+        parser.add_argument("--match-scheme", required=False, default="exact",
+            choices=["exact", "startswith", "contains"],
+            help="Choose whether names are matched exactly, when the start of the name matches, or if the substring appears anywhere in the name"
         )
         parser.add_argument("--force-recalculation", action="store_true",
             help="If set, transactions which already have a calculated charge value will be recalculated"
@@ -60,69 +78,33 @@ class Command(BaseCommand):
         charge_multiplier = 1.0 - kwargs["discount"]
         start_time = kwargs["start"]
         end_time = kwargs["end"]
-        use_contains = kwargs["names-contain"]
         overwrite = kwargs["force-recalculation"]
+        scheme = kwargs["match-scheme"]
 
         # Collect relevant services
-        q = None
-        if kwargs["systems"] is not None:
-            for system in kwargs["systems"].split(","):
-                if q is None:
-                    if use_contains:
-                        q = Q(system__name__icontains=system)
-                    else:
-                        q = Q(system__name=system)
-                else:
-                    if use_contains:
-                        q |= Q(system__name__icontains=system)
-                    else:
-                        q |= Q(system__name=system)
-        elif kwargs["services"] is not None:
-            for service in kwargs["services"].split(","):
-                if q is None:
-                    if use_contains:
-                        q = Q(name__icontains=service)
-                    else:
-                        q = Q(name=service)
-                else:
-                    if use_contains:
-                        q |= Q(name__icontains=service)
-                    else:
-                        q |= Q(name=service)
-
         services = "ANY"
-        if q is not None:
+        if kwargs["systems"] is not None:
+            q = translate_names_to_filters(
+                kwargs["systems"].split(","), "system__name", scheme
+            )
+            services = Service.objects.filter(q, active=True)
+        elif kwargs["services"] is not None:
+            q = translate_names_to_filters(
+                kwargs["services"].split(","), "name", scheme
+            )
             services = Service.objects.filter(q, active=True)
 
         # Collect relevant accounts
-        q = None
-        if kwargs["projects"] is not None:
-            for project in kwargs["projects"].split(","):
-                if q is None:
-                    if use_contains:
-                        q = Q(project__name__icontains=project)
-                    else:
-                        q = Q(project__name=project)
-                else:
-                    if use_contains:
-                        q |= Q(project__name__icontains=project)
-                    else:
-                        q |= Q(project__name=project)
-        elif kwargs["accounts"] is not None:
-            for account in kwargs["accounts"].split(","):
-                if q is None:
-                    if use_contains:
-                        q = Q(name__icontains=account)
-                    else:
-                        q = Q(name=account)
-                else:
-                    if use_contains:
-                        q |= Q(name__icontains=account)
-                    else:
-                        q |= Q(name=account)
-
         accounts = "ANY"
-        if q is not None:
+        if kwargs["projects"] is not None:
+            q = translate_names_to_filters(
+                kwargs["projects"].split(","), "project__name", scheme
+            )
+            accounts = Account.objects.filter(q, active=True)
+        elif kwargs["accounts"] is not None:
+            q = translate_names_to_filters(
+                kwargs["accounts"].split(","), "name", scheme
+            )
             accounts = Account.objects.filter(q, active=True)
 
         if not kwargs["auto-confirm"]:
