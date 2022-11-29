@@ -31,37 +31,48 @@ class Command(BaseCommand):
     help = "Calculate charge amounts for a selection of transactions"
 
     def add_arguments(self, parser):
-        parser.add_argument("--start", required=True,
-            type=datetime.datetime.fromisoformat,
-            help="(Required) ISO-formatted timestamp to be the start of the selection window"
+        fmt = "(Required) ISO-formatted timestamp, {} of the selection window"
+        parser.add_argument(
+            "--start", required=True, type=datetime.datetime.fromisoformat,
+            help=fmt.format("start")
         )
-        parser.add_argument("--end", required=True,
-            type=datetime.datetime.fromisoformat,
-            help="(Required) ISO-formatted timestamp to be the end of the selection window"
+        parser.add_argument(
+            "--end", required=True, type=datetime.datetime.fromisoformat,
+            help=fmt.format("end")
         )
-        parser.add_argument("--systems", required=False, default=None,
-            help="Comma separated list of system names for selecting transactions. Cannot use with --services"
+
+        fmt = "Comma separated list of {} names for selecting transactions."
+        parser.add_argument(
+            "--systems", required=False, default=None,
+            help=fmt.format("system")
         )
-        parser.add_argument("--services", required=False, default=None,
-            help="Comma separated list of service names for selecting transactions. Cannot use with --systems"
+        parser.add_argument(
+            "--services", required=False, default=None,
+            help=fmt.format("service")
         )
-        parser.add_argument("--projects", required=False, default=None,
-            help="Comma separated list of project names for selecting transactions. Cannot use with --accounts"
+        parser.add_argument(
+            "--projects", required=False, default=None,
+            help=fmt.format("project")
         )
-        parser.add_argument("--accounts", required=False, default=None,
-            help="Comma separated list of account names for selecting transactions. Cannot use with --projects"
+        parser.add_argument(
+            "--accounts", required=False, default=None,
+            help=fmt.format("account")
         )
-        parser.add_argument("--match-scheme", required=False, default="exact",
+        parser.add_argument(
+            "--match-scheme", required=False, default="exact",
             choices=["exact", "startswith", "contains"],
-            help="Choose whether names are matched exactly, when the start of the name matches, or if the substring appears anywhere in the name"
+            help="Use the selected criteria when matching name filters"
         )
-        parser.add_argument("--force-recalculation", action="store_true",
-            help="If set, transactions which already have a calculated charge value will be recalculated"
+        parser.add_argument(
+            "--force-recalculation", action="store_true",
+            help="If set, already charged transactions will be recalculated"
         )
-        parser.add_argument("--discount", required=False, default=0.0, type=float,
-            help="Apply a discount to the services' charge rates. Must be a float in the range [0.0, 1.0)"
+        parser.add_argument(
+            "--discount", required=False, default=0.0, type=float,
+            help="Use a discounted charge rate. Must be in the range [0, 1.0)"
         )
-        parser.add_argument("--auto-confirm", action="store_true",
+        parser.add_argument(
+            "--auto-confirm", action="store_true",
             help="If set, disable pauses for confirmation"
         )
 
@@ -69,13 +80,13 @@ class Command(BaseCommand):
         if kwargs["start"] > kwargs["end"]:
             raise CommandError("Start must be before End")
         if kwargs["systems"] is not None and kwargs["services"] is not None:
-            raise CommandError("May only specify systems or services, but not both")
+            raise CommandError("May not specify both systems and services")
         if kwargs["projects"] is not None and kwargs["accounts"] is not None:
-            raise CommandError("May only specify projects or accounts, but not both")
+            raise CommandError("May not specify both projects and accounts")
         if kwargs["discount"] >= 1.0 or kwargs["discount"] < 0.0:
             raise CommandError("Discount must be within the range [0.0, 1.0)")
 
-        charge_multiplier = 1.0 - kwargs["discount"]
+        multiplier = 1.0 - kwargs["discount"]
         start_time = kwargs["start"]
         end_time = kwargs["end"]
         overwrite = kwargs["force-recalculation"]
@@ -108,12 +119,14 @@ class Command(BaseCommand):
             accounts = Account.objects.filter(q, active=True)
 
         if not kwargs["auto-confirm"]:
+            start_fmt = start_time.isoformat()
+            end_fmt = end_time.isoformat()
             print("Charging transactions with the following:\n")
-            print(f"\tTime Window: {start_time.isoformat} - {end_time.isoformat}")
+            print(f"\tTime Window: {start_fmt} - {end_fmt}")
             print(f"\tServices: {services}")
             print(f"\tAccounts: {accounts}")
             print(f"\tOverwrite Non-Zero Charges: {overwrite}")
-            print(f"\tService Charge-Rate Multiplier: {charge_multiplier}")
+            print(f"\tService Charge-Rate Multiplier: {multiplier}")
             input("\nHit Enter to continue...")
 
         transactions = Transaction.objects.filter(
@@ -131,4 +144,6 @@ class Command(BaseCommand):
             print(f"Selection returned {count} transactions.")
             input("\nHit Enter to apply charging...")
 
-        transactions.update(amt_charged=F("amt_used") * F("service__charge_rate") * charge_multiplier)
+        transactions.update(
+            amt_charged=F("amt_used") * F("service__charge_rate") * multiplier
+        )
