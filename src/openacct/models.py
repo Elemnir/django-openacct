@@ -18,7 +18,8 @@ class User(models.Model):
     active = models.BooleanField(blank=True, default=True)
     projects = models.ManyToManyField("Project", blank=True)
     default_project = models.ForeignKey(
-        "Project", on_delete=models.CASCADE, blank=True, null=True, related_name="+"
+        "Project", on_delete=models.CASCADE, 
+        blank=True, null=True, related_name="+"
     )
 
     def __str__(self):
@@ -36,8 +37,16 @@ class Project(models.Model):
     name = models.CharField(max_length=32, unique=True)
     ldap_group = models.CharField(max_length=32, blank=True)
     active = models.BooleanField(blank=True, default=True)
-    pi = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owned_projects")
-    managers = models.ManyToManyField(User, blank=True, related_name="managed_projects")
+    parent = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, related_name="children",
+        blank=True, null=True, default=None
+    )
+    pi = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="owned_projects"
+    )
+    managers = models.ManyToManyField(
+        User, blank=True, related_name="managed_projects"
+    )
     description = models.CharField(max_length=1024, blank=True, default="")
 
     def __str__(self):
