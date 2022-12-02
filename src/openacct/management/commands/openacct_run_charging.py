@@ -2,8 +2,6 @@
 import datetime
 import logging
 
-from typing import Literal
-
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import F, Q
 
@@ -12,11 +10,7 @@ from openacct.models import Account, Service, Transaction
 logger = logging.getLogger(__name__)
 
 
-def translate_names_to_filters(
-    names: list[str],
-    prefix: str,
-    scheme: Literal["exact", "startswith", "contains"]
-) -> Q:
+def translate_names_to_filters(names, prefix, scheme):
     """Given a list of names, translate them into a Q representing that set"""
     key = prefix + {
         "exact": "", "startswith": "__startswith", "contains": "__icontains"
