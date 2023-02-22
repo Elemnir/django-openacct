@@ -4,7 +4,7 @@ from .models import EmailTemplate, Request
 
 @admin.register(EmailTemplate)
 class EmailTemplateAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("name", "subject", "default_from")
 
 
 @admin.register(Request)

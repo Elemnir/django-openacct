@@ -2,6 +2,13 @@
  Changelog
 ===========
 
+Version 0.0.7
+-------------
+
+- Integrating the User Request Framework ``openacct.contrib.urf`` for generic custom request logic
+- URF integrates into the Django Admin site
+- Added signal handler logic for Projects and Users to automatically create UserProjectEvent objects when memberships change
+
 Version 0.0.6
 -------------
 
@@ -23,7 +30,7 @@ Version 0.0.4
 Version 0.0.3
 -------------
 
-- Adding Jobs to to the web API
+- Adding Jobs to the web API
 - Setting up the basic Django Admin for the models
 
 Version 0.0.2
