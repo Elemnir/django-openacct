@@ -119,11 +119,11 @@ def project_members_changed(sender, **kwargs):
     for pk in kwargs["pk_set"]:
         if kwargs["model"] == Project:
             UserProjectEvent.objects.create(
-                project=pk, user=kwargs["instance"], event_type=etype
+                project_id=pk, user=kwargs["instance"], event_type=etype
             )
         elif kwargs["model"] == User:
             UserProjectEvent.objects.create(
-                project=kwargs["instance"], user=pk, event_type=etype
+                project=kwargs["instance"], user_id=pk, event_type=etype
             )
 
 
@@ -142,7 +142,7 @@ class Account(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=32)
     active = models.BooleanField(blank=True, default=True)
-    expires = models.DateTimeField(blank=True)
+    expires = models.DateTimeField(blank=True, null=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     services = models.ManyToManyField("Service", blank=True)
 
@@ -250,14 +250,19 @@ class Job(models.Model):
     completed = models.DateTimeField(blank=True, null=True)
     jobid = models.CharField(max_length=32, unique=True)
     name = models.CharField(max_length=64, blank=True, default="")
+    cluster = models.CharField(max_length=32, blank=True, default="")
+    submitter = models.CharField(max_length=32, blank=True, default="")
     submit_host = models.CharField(max_length=64, blank=True, default="")
     host_list = models.CharField(max_length=1024, blank=True, default="")
     account = models.CharField(max_length=64, blank=True, default="")
+    partition = models.CharField(max_length=64, blank=True, default="")
     qos = models.CharField(max_length=64, blank=True, default="")
     job_script = models.TextField(blank=True, default="")
     transactions = models.ManyToManyField(Transaction, blank=True)
+    tres_requested = models.TextField(blank=True, default="")
+    tres_allocated = models.TextField(blank=True, default="")
     wall_requested = models.IntegerField()
-    wall_duration = models.IntegerField(blank=True)
+    wall_duration = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return "Job: {} - {}".format(self.jobid, self.name)

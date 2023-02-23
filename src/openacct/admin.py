@@ -44,6 +44,8 @@ class ProjectMembershipInline(admin.TabularInline):
 @admin.register(User)
 class UserAdmin(ToggleActiveAdminMixin, admin.ModelAdmin):
     list_display = ("name", "realname", "active", "created")
+    list_filter = ("active", "created")
+    search_fields = ("name", "realname")
     inlines = [ProjectMembershipInline]
     exclude = ("projects",)
 
@@ -62,6 +64,8 @@ class ProjectAdmin(ToggleActiveAdminMixin, admin.ModelAdmin):
 
     inlines = [AccountInline, ProjectMembershipInline]
     list_display = ("name", "description", "ldap_group", "active", "created")
+    list_filter = ("active", "created")
+    search_fields = ("name", "description", "ldap_group")
 
 
 @admin.register(UserProjectEvent)
@@ -112,9 +116,45 @@ class TransactionAdmin(ToggleActiveAdminMixin, admin.ModelAdmin):
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
-    pass
+    class JobTxInline(admin.TabularInline):
+        model = Job.transactions.through
+        extra = 0
+        verbose_name = "Transaction"
+        verbose_name_plural = "Transactions"
+    
+    list_display = (
+        "jobid",
+        "name",
+        "account",
+        "queued",
+        "started",
+        "completed",
+    )
+    list_filter = ("cluster", "account")
+    search_fields = ("jobid", "name", "submitter", "account", "cluster")
+
+    inlines = [JobTxInline]
+    exclude = ("transactions",)
 
 
 @admin.register(StorageCommitment)
 class StorageCommitmentAdmin(admin.ModelAdmin):
-    pass
+    class StorCommTxInline(admin.TabularInline):
+        model = StorageCommitment.transactions.through
+        extra = 0
+        verbose_name = "Transaction"
+        verbose_name_plural = "Transactions"
+
+    list_display = (
+        "path",
+        "filesystem",
+        "dir_type",
+        "project",
+        "commitment",
+        "allocated",
+        "end_date",
+    )
+    list_filter = ("dir_type", "created", "allocated")
+    search_fields = ("project", "filesystem", "path")
+    inlines = [StorCommTxInline]
+    exclude = ("transactions",)
