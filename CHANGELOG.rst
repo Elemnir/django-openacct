@@ -8,6 +8,8 @@ Version 0.0.7
 - Integrating the User Request Framework ``openacct.contrib.urf`` for generic custom request logic
 - URF integrates into the Django Admin site
 - Added signal handler logic for Projects and Users to automatically create UserProjectEvent objects when memberships change
+- Added additional metadata to Jobs
+- Updates to the Django admin for core data model
 
 Version 0.0.6
 -------------
