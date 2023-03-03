@@ -1,5 +1,6 @@
 import re
 
+from collections import defaultdict
 from typing import Union
 
 from django.db import models
@@ -298,3 +299,74 @@ class StorageCommitment(models.Model):
 
     def __str__(self):
         return "StorComm: {} - {}".format(self.filesystem, self.path)
+
+
+class Invoice(models.Model):
+    """A project usage invoice with related BalanceSheets."""
+    created = models.DateTimeField(auto_now_add=True)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    predecessor = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, related_name="descendants",
+        blank=True, null=True, default=None
+    )
+ 
+    def previous_account_balance(self, account):
+        balance = 0.0
+        if not self.predecessor:
+            return balance
+        try:
+            previous = self.predecessor.sheets.get(account=account)
+            balance = previous.balance
+        except BalanceSheet.DoesNotExist:
+            pass
+        return balance
+
+    def generate_balance_sheets(self):
+        for account in self.project.account_set.filter(active=True):
+            balance = self.previous_account_balance(account)
+            data = {
+                "used": defaultdict(defaultdict(float)),
+                "charged": defaultdict(defaultdict(float)),
+            }
+            txs = Transaction.objects.filter(
+                account=account,
+                created__gte=self.start_time,
+                created__lte=self.end_time
+            ).select_related("user", "service")
+            for tx in txs:
+                if tx.type == "DEBIT":
+                    data["used"][tx.user.name][tx.service.name] += tx.amt_used
+                    data["charged"][tx.user.name][tx.service.name] += (
+                        tx.amt_charged
+                    )
+                    balance += tx.amt_charged
+
+                elif tx.type == "CREDIT":
+                    data["used"][tx.user.name][tx.service.name] -= tx.amt_used
+                    data["charged"][tx.user.name][tx.service.name] -= (
+                        tx.amt_charged
+                    )
+                    balance -= tx.amt_charged
+            BalanceSheet.objects.create(
+                invoice=self,
+                account=account,
+                balance=balance,
+                transactions=txs,
+                contents=data
+            )
+
+
+class BalanceSheet(models.Model):
+    """An itemized list of transactions which are processed to calculate usage
+    and balance summaries. The ``contents`` field will be a JSON object
+    aggregating the transactions into balances and usage by user and service.
+    """
+    invoice = models.ForeignKey(
+        Invoice, on_delete=models.CASCADE, related_name="sheets"
+    )
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    balance = models.FloatField(blank=True, default=0.0)
+    transactions = models.ManyToManyField(Transaction, blank=True)
+    contents = models.JSONField(blank=True, default=dict)
