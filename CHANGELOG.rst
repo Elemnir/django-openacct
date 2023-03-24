@@ -10,6 +10,7 @@ Version 0.0.7
 - Added signal handler logic for Projects and Users to automatically create UserProjectEvent objects when memberships change
 - Added additional metadata to Jobs
 - Updates to the Django admin for core data model
+- Adding the Invoice and BalanceSheet models for summarizing usage and charging information
 
 Version 0.0.6
 -------------

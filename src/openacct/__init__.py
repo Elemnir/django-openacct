@@ -1,4 +1,4 @@
-__version__     = "0.0.5"
+__version__     = "0.0.7"
 
 __title__       = "django-openacct"
 __description__ = "A pluggable Django app for managing research computing center project accounting."

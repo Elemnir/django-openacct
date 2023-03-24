@@ -6,7 +6,6 @@ from typing import Union
 from django.db import models
 from django.db.models.signals import m2m_changed
 
-
 class User(models.Model):
     """A user account. Is a member of zero or more projects, and can
     have a default_project selected for setting a default when
@@ -151,6 +150,9 @@ class Account(models.Model):
         return "Account: {}".format(self.name)
 
     def get_index_value(self):
+        """Returns the numeric integer component at the end of a project
+        name, if it has one, otherwise returns 0.
+        """
         m = re.search(r"\d+$", self.name)
         return int(m.group(0), 10) if m else 0
 
@@ -311,8 +313,12 @@ class Invoice(models.Model):
         "self", on_delete=models.SET_NULL, related_name="descendants",
         blank=True, null=True, default=None
     )
- 
+
     def previous_account_balance(self, account):
+        """Determine the previous balance for the give account from a
+        predecessor Invoice, if one exists and contains a BalanceSheet 
+        for that account, otherwise return 0.0
+        """
         balance = 0.0
         if not self.predecessor:
             return balance
@@ -324,8 +330,15 @@ class Invoice(models.Model):
         return balance
 
     def generate_balance_sheets(self):
+        """Iterate active project accounts, generating BalanceSheets for
+        each. The invoking Invoice must have been previously saved to
+        the database, otherwise it will not have a valid primary key
+        """
         for account in self.project.account_set.filter(active=True):
             balance = self.previous_account_balance(account)
+            data = defaultdict(
+                lambda : defaultdict(lambda : {"charged": 0.0, "used": 0.0})
+            )
             data = {
                 "used": defaultdict(defaultdict(float)),
                 "charged": defaultdict(defaultdict(float)),
@@ -336,19 +349,16 @@ class Invoice(models.Model):
                 created__lte=self.end_time
             ).select_related("user", "service")
             for tx in txs:
+                amt_used, amt_charged = 0, 0
                 if tx.type == "DEBIT":
-                    data["used"][tx.user.name][tx.service.name] += tx.amt_used
-                    data["charged"][tx.user.name][tx.service.name] += (
-                        tx.amt_charged
-                    )
-                    balance += tx.amt_charged
-
+                    amt_used, amt_charged = tx.amt_used, tx.amt_charged
                 elif tx.type == "CREDIT":
-                    data["used"][tx.user.name][tx.service.name] -= tx.amt_used
-                    data["charged"][tx.user.name][tx.service.name] -= (
-                        tx.amt_charged
-                    )
-                    balance -= tx.amt_charged
+                    amt_used, amt_charged = -tx.amt_used, -tx.amt_charged
+
+                data[tx.user.name][tx.service.name]["used"] += amt_used
+                data[tx.user.name][tx.service.name]["charged"] += amt_charged
+                balance += amt_charged
+
             BalanceSheet.objects.create(
                 invoice=self,
                 account=account,

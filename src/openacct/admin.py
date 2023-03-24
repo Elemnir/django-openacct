@@ -10,6 +10,8 @@ from .models import (
     Transaction,
     Job,
     StorageCommitment,
+    Invoice,
+    BalanceSheet,
 )
 
 from .shortcuts import add_user_to_project, create_account
@@ -158,3 +160,20 @@ class StorageCommitmentAdmin(admin.ModelAdmin):
     search_fields = ("project", "filesystem", "path")
     inlines = [StorCommTxInline]
     exclude = ("transactions",)
+
+
+@admin.register(Invoice)
+class InvoiceAdmin(admin.ModelAdmin):
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if not change:
+            obj.generate_balance_sheets()
+
+    class BalanceSheetInline(admin.TabularInline):
+        extra = 0
+        model = BalanceSheet
+
+    inlines = [BalanceSheetInline]
+    list_display = ("created", "project", "start_time", "end_time")
+
+
