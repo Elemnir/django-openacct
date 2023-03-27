@@ -23,7 +23,7 @@ class User(models.Model):
     )
 
     def __str__(self):
-        return "User: {}".format(self.name)
+        return "{}".format(self.name)
 
 
 class Project(models.Model):
@@ -50,7 +50,7 @@ class Project(models.Model):
     description = models.CharField(max_length=1024, blank=True, default="")
 
     def __str__(self):
-        return "Project: {} - {}".format(self.name, self.description)
+        return "{} - {}".format(self.name, self.description)
 
     def get_index_value(self):
         m = re.search(r"\d+$", self.name)
@@ -94,7 +94,7 @@ class UserProjectEvent(models.Model):
     event_type = models.CharField(max_length=16, choices=EVENT_TYPES)
 
     def __str__(self):
-        return "UPEvent: {} - {} - {}".format(
+        return "{} - {} - {}".format(
             self.event_type, self.project.name, self.user.name
         )
 
@@ -147,7 +147,7 @@ class Account(models.Model):
     services = models.ManyToManyField("Service", blank=True)
 
     def __str__(self):
-        return "Account: {}".format(self.name)
+        return "{}".format(self.name)
 
     def get_index_value(self):
         """Returns the numeric integer component at the end of a project
@@ -179,7 +179,7 @@ class System(models.Model):
     description = models.CharField(max_length=1024, blank=True, default="")
 
     def __str__(self):
-        return "System: {}".format(self.name)
+        return "{}".format(self.name)
 
 
 class Service(models.Model):
@@ -199,7 +199,7 @@ class Service(models.Model):
     description = models.CharField(max_length=1024, blank=True, default="")
 
     def __str__(self):
-        return "Service: {}".format(self.name)
+        return "{}".format(self.name)
 
 
 class Transaction(models.Model):
@@ -231,7 +231,7 @@ class Transaction(models.Model):
     tx_type = models.CharField(max_length=16, choices=TX_TYPES)
 
     def __str__(self):
-        return "Tx: {} - {} - {}".format(
+        return "{} - {} - {}".format(
             self.created, self.service.name, self.account.name
         )
 
@@ -268,7 +268,7 @@ class Job(models.Model):
     wall_duration = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
-        return "Job: {} - {}".format(self.jobid, self.name)
+        return "{} - {}".format(self.jobid, self.name)
 
 
 class StorageCommitment(models.Model):
@@ -300,7 +300,7 @@ class StorageCommitment(models.Model):
     transactions = models.ManyToManyField(Transaction, blank=True)
 
     def __str__(self):
-        return "StorComm: {} - {}".format(self.filesystem, self.path)
+        return "{} - {}".format(self.filesystem, self.path)
 
 
 class Invoice(models.Model):
@@ -337,12 +337,8 @@ class Invoice(models.Model):
         for account in self.project.account_set.filter(active=True):
             balance = self.previous_account_balance(account)
             data = defaultdict(
-                lambda : defaultdict(lambda : {"charged": 0.0, "used": 0.0})
+                lambda : defaultdict(lambda : {"c": 0.0, "u": 0.0})
             )
-            data = {
-                "used": defaultdict(defaultdict(float)),
-                "charged": defaultdict(defaultdict(float)),
-            }
             txs = Transaction.objects.filter(
                 account=account,
                 created__gte=self.start_time,
@@ -355,8 +351,8 @@ class Invoice(models.Model):
                 elif tx.type == "CREDIT":
                     amt_used, amt_charged = -tx.amt_used, -tx.amt_charged
 
-                data[tx.user.name][tx.service.name]["used"] += amt_used
-                data[tx.user.name][tx.service.name]["charged"] += amt_charged
+                data[tx.user.name][tx.service.name]["u"] += amt_used
+                data[tx.user.name][tx.service.name]["c"] += amt_charged
                 balance += amt_charged
 
             BalanceSheet.objects.create(
