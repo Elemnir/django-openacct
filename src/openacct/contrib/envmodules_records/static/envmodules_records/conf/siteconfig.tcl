@@ -16,13 +16,13 @@ if {[info exists ::env(MODULE_SESSION_UUID)] == 0} {
    set ::env(MODULE_SESSION_UUID) [exec uuidgen -t]
 }
 
-proc execLogger {msg} {
+proc execLogger {tag msg} {
    # ensure logger command is executed with system libs
    if {[info exists ::env(LD_LIBRARY_PATH)]} {
       set ORIG_LD_LIBRARY_PATH $::env(LD_LIBRARY_PATH)
       unset ::env(LD_LIBRARY_PATH)
    }
-   exec logger -t module $msg
+   exec logger -t $tag $msg
    # restore current user lib setup
    if {[info exists ORIG_LD_LIBRARY_PATH]} {
       set ::env(LD_LIBRARY_PATH) $ORIG_LD_LIBRARY_PATH
@@ -49,9 +49,9 @@ proc logModfileInterp {cmdstring op} {
       } else {
          set extra {}
       }
-      set uuid ::env(MODULE_SESSION_UUID)
-      # produced log entry (formatted as a JSON record)
-      execLogger "{ \"uuid\": \"$uuid\", \"mode\": \"$mode\", \"module\": \"$modname\"${extra} }"
+      set uuid $::env(MODULE_SESSION_UUID)
+      set msg "{ \"uuid\": \"$uuid\", \"mode\": \"$mode\", \"module\": \"$modname\"${extra} }"
+      execLogger module-event $msg
    }
 }
 
@@ -59,14 +59,6 @@ proc logModfileInterp {cmdstring op} {
 trace add execution execute-modulefile enter logModfileInterp
 
 proc logModuleCmd {cmdstring op} {
-   # parse context
-   set args [lassign $cmdstring cmdname]
-   if {[info level] > 1} {
-      set caller [lindex [info level -1] 0]
-   } else {
-      set caller {}
-   }
-   
    set uuid $::env(MODULE_SESSION_UUID)
    set user $::env(USER)
 
@@ -81,8 +73,10 @@ proc logModuleCmd {cmdstring op} {
    }
 
    # skip duplicate log entry when ml command calls module
-   if {$cmdname ne {module} || $caller ne {ml}} {
-      execLogger "{ \"uuid\": \"$uuid\", \"user\": \"$user\", \"command\": \"$cmdstring\"${extra} }"
+   if {[info exists ::env(MODULE_COMMAND_LOGGED)] == 0} {
+      set ::env(MODULE_COMMAND_LOGGED) true
+      set msg "{ \"uuid\": \"$uuid\", \"user\": \"$user\", \"command\": \"$cmdstring\"${extra} }"
+      execLogger module-cmd $msg
    }
 }
 
