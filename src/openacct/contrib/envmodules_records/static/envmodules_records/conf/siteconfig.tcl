@@ -50,7 +50,7 @@ proc logModfileInterp {cmdstring op} {
          set extra {}
       }
       set uuid $::env(MODULE_SESSION_UUID)
-      set msg "{ \"uuid\": \"$uuid\", \"mode\": \"$mode\", \"module\": \"$modname\"${extra} }"
+      set msg "{ \"uuid\": \"$uuid\", \"mode\": \"$mode\", \"module\": \"$modfile\"${extra} }"
       execLogger module-event $msg
    }
 }
