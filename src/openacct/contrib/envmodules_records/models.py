@@ -24,7 +24,8 @@ class EnvmodulesEventRecord(models.Model):
     caused = models.ForeignKey(EnvmodulesCommandRecord, on_delete=models.CASCADE)
     mode = models.CharField(max_length=8, choices=(("load","Load"),("unload","Unload")))
     auto = models.BooleanField(blank=True, default=False)
-    module = models.CharField(max_length=1024)
+    module = models.CharField(max_length=256)
+    modfile = models.CharField(max_length=1024)
 
     def __str__(self):
         return f"{self.mode} - {self.module}"

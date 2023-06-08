@@ -18,7 +18,7 @@ class EnvmodulesEventRecordForm(forms.ModelForm):
 
     class Meta:
         model = EnvmodulesEventRecord
-        fields = ["mode", "auto", "module"]
+        fields = ["mode", "auto", "module", "modfile"]
 
 
     def clean(self):
