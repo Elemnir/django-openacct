@@ -23,10 +23,10 @@ class EnvmodulesEventRecordForm(forms.ModelForm):
 
     def clean(self):
         cd = super().clean()
-        command_uuid = cd['command_uuid'] = cd.get('command_uuid', '')
+        command_uuid = cd['uuid'] = cd.get('uuid', '')
         try:
             cd['caused_id'] = EnvmodulesCommandRecord.objects.get(
-                name=command_uuid
+                uuid=command_uuid
             ).pk
             return cd
         except ObjectDoesNotExist:

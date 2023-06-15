@@ -47,7 +47,9 @@ class TokenAuthMixin(AccessMixin):
         """
         try:
             nt = now()
-            AuthToken.objects.get(token=token, expires__gt=nt).update(last_used=nt)
+            token = AuthToken.objects.get(token=token, expires__gt=nt)
+            token.last_used = nt
+            token.save()
             return True
         except models.ObjectDoesNotExist:
             return False
