@@ -33,11 +33,11 @@
 </form>
 
 {% for element in widgets %}
-  <form action="{% url element.update_view_name element.pk %}" method=post>
+  <form action="{#{% url element.update_view_name element.pk %}#}" method=post>
     {% csrf_token %}
     <fieldset class="module aligned">
       {% include element.widget_template_path with item=element is_admin=is_admin widgets=widgets only %}  
-      <input class="default" type=submit>Commit Changes</button>
+      <input type=submit value="Commit Changes">
     </fieldset>
   </form>
 {% endfor %}
