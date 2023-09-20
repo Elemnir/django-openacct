@@ -261,7 +261,7 @@ class ServiceView(LoginRequiredMixin, UserPassesTestMixin, View):
                             "created": a.created,
                             "expires": a.expires,
                         }
-                        for a in Service.account_set.filter(active=True)
+                        for a in service.account_set.filter(active=True)
                     ],
                 }
             }
