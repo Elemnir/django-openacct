@@ -20,6 +20,9 @@ class Location(models.Model):
     state = models.CharField(max_length=256)
     city = models.CharField(max_length=256)
 
+    def __str__(self):
+        return f"{self.country} - {self.state} - {self.city}"
+
 class LoginLocation(models.Model):
     role = models.CharField(max_length=32)
     login = models.ForeignKey(LoginRecord, on_delete=models.CASCADE)
